@@ -4,7 +4,7 @@
 #define PIN_ENCODER 2
 
 encoder::encoder(){
-    LongitudArco = 1; //La distancia en metros que recorre el robot cada vez que el encoder es activado.
+    LongitudArco = 0.00816814; //La distancia en metros que recorre el robot cada vez que el encoder es activado.
     DistanciaRecorrida = 0;
 }
 
