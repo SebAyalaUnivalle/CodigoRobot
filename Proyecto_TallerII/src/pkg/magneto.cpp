@@ -7,8 +7,9 @@
 
 //Inicializa el magnetometro y los 3 componentes de la fuerza magnetica que detecta el componente.
 magneto::magneto(){
-    HMC5883L magnetometro;
-    int16_t magnX, magnY, magnZ;
+    magnX = 0;
+    magnY = 0;
+    magnZ = 0;
     Wire.begin();
     magnetometro.initialize();
 }
