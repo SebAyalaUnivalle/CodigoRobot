@@ -10,14 +10,14 @@ magneto::magneto(){
     magnX = 0;
     magnY = 0;
     magnZ = 0;
+    Serial.begin(9600);
     Wire.begin();
     magnetometro.initialize();
 }
 
 magneto::~magneto(){}
 
-//Indica la direccion actual, dada en una distancia desde 0 hasta 2pi radianes.
-//Medida con respecto del Norte magnetico, en el sentido del reloj.
+//FALTA CORREGIR LOS ANGULOS GENERADOS POR ESTA FUNCION, AHORA MISMO GENERA UN ANGULO CON RESPECTO AL NORTE MAGNETICO, NO EL EJE X POSITIVO GLOBAL
 float magneto::DireccionActual(){ //En Radianes
     float angulo;
     magnetometro.getHeading(&magnX, &magnY, &magnZ);

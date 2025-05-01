@@ -16,44 +16,79 @@
 #define PIN_ENCODER 2
 
 //El magnetometro usa los pines analogos A5 y A4.
-// --------------------
 
-//-- Variables Globales-- 
-float posX;
-float posY;
-float theta; //Rotación del carro 
-//-----------------------
+//---------------------------------------------------------
 
-comm bt(2, 8, 0, 1);
-Coords CoordsIniciales = {0, 0, 0};
+//-- Variables Globales -----------------------------------
+//float posX;
+//float posY;
+//float theta; //Rotación del carro 
 
+//comm bt(2, 8, 0, 1);
+//Coords CoordsIniciales = {0, 0, 0};
+
+//Variables que entran por el bluetooth
+float Xcultivo, Ycultivo, RotacionCultivo, RotacionInicial;
+float PuntoInicial[2], PuntoA[2], PuntoB [2]; //Indice 0 es X, indice 1 es Y
+
+//Variables que son calculadas dentro del codigo
+float DistanciaObjetivo, RotacionObjetivo, PosicionActual[2];
+
+//Inicializacion del encoder y el magnetometro
 encoder regla;
+magneto brujula; // Inicializa el Serial a 9600 por su cuenta, no es necesario volver a activarlo posteriormente.
 
 //-- Funciones --------------------------------------------
-void procesarComando(String cmd) {
-   if (cmd.startsWith("POS:")) {
-     int indexTheta = cmd.indexOf("THETA:");
-     if (indexTheta != -1) {
-       String posStr = cmd.substring(4, indexTheta - 1);
-       int coma = posStr.indexOf(',');
-       posX = posStr.substring(0, coma).toFloat();
-       posY = posStr.substring(coma + 1).toFloat();
+
+// void procesarComando(String cmd) {
+//    if (cmd.startsWith("POS:")) {
+//      int indexTheta = cmd.indexOf("THETA:");
+//      if (indexTheta != -1) {
+//        String posStr = cmd.substring(4, indexTheta - 1);
+//        int coma = posStr.indexOf(',');
+//        posX = posStr.substring(0, coma).toFloat();
+//        posY = posStr.substring(coma + 1).toFloat();
  
-       String thetaStr = cmd.substring(indexTheta + 6);
-       theta = thetaStr.toFloat();
+//        String thetaStr = cmd.substring(indexTheta + 6);
+//        theta = thetaStr.toFloat();
  
-       Serial.print("X: "); Serial.println(posX);
-       Serial.print("Y: "); Serial.println(posY);
-       Serial.print("θ: "); Serial.println(theta);
-     }
-   }
+//        Serial.print("X: "); Serial.println(posX);
+//        Serial.print("Y: "); Serial.println(posY);
+//        Serial.print("θ: "); Serial.println(theta);
+//      }
+//    }
+//  }
+
+//Entra un numero dado en grados y devuelve el mismo en radianes.
+float GradosToRad(float grados){
+   return grados * 0.017453;
  }
 
+//Entra un numero dado en radianes y devuelve el mismo en grados.
+float RadToGrados(float rad){
+   return rad * 57.29578;
+ }
 
- //Cada vez que se activa el encoder, llama a la funcion del objeto.
+//Funcion que toma el vector objetivo como entrada, calculando la distancia a recorrer y el angulo objetivo (En radianes)
+void DefinirObjetivos(float Vector[2]){
+   DistanciaObjetivo = sqrt(pow((Vector[1] - PosicionActual[1]) ,2) + pow((Vector[0] - PosicionActual[0]) ,2));
+   RotacionObjetivo = atan2(Vector[1] - PosicionActual[1] , Vector[0] - PosicionActual[0]);
+   if (RotacionObjetivo < 0) {RotacionObjetivo = RotacionObjetivo + 6.2832;}
+ }
+
+//Pasa un vector del sistema local al sistema global
+void Local_a_Global(float (*Vector)[2]){
+   float SavedVector[2] = {(*Vector)[0], (*Vector)[1]};
+   
+   (*Vector)[0] = (SavedVector[0] * cos(RotacionCultivo)) - (SavedVector[1] * sin(RotacionCultivo)) + Xcultivo;
+   (*Vector)[1] = (SavedVector[0] * sin(RotacionCultivo)) + (SavedVector[1] * cos(RotacionCultivo)) + Ycultivo;
+ }
+
+//Cada vez que se activa el encoder, llama a la funcion del objeto.
 void IncrementarDistEncoder(){
    regla.IncrementarDistancia();
 }
+
 //---------------------------------------------------------
 
 // ------------ Constructor de los motores -------------
@@ -63,10 +98,6 @@ Motor motorB = {MOTOR_B_PIN1, MOTOR_B_PIN2, B};
 // -------------------------------------------------------
 
 void setup() {
-   //Inicializa el Serial, antes de inicializar el magnetometro.
-   Serial.begin(9600);
-   magneto brujula;
-
    //Inicializar el pin del encoder, y detectar cada vez que este se activa.
    pinMode(PIN_ENCODER, INPUT);
    attachInterrupt(digitalPinToInterrupt(PIN_ENCODER), IncrementarDistEncoder, FALLING);
@@ -87,6 +118,15 @@ void setup() {
 
 void loop() {
 
+   // !!!   EL CODIGO DESPUES DE ESTE COMENTARIO SOLO SE DEBE EJECUTAR DESPUES DE REALIZAR LA CONEXION
+   //   BLUETOOTH, Y HABER RECIBIDO LOS DATOS NECESARIOS PARA LA NAVEGACION POR MEDIO DE ESTA   !!!
+
+   Local_a_Global(&PuntoA);
+   Local_a_Global(&PuntoB);
+   RotacionCultivo = GradosToRad(RotacionCultivo); //El dato entra desde el bluetooth con un valor en grados.
+   PosicionActual[0] = PuntoInicial[0];
+   PosicionActual[1] = PuntoInicial[1];
+
    //Espera a que la planta se coloque en su lugar
    while (digitalRead(PLANT_PIN)==LOW)
    {
@@ -96,7 +136,6 @@ void loop() {
    }
    
    //Si detecta la planta 
-   //...
 
 }
 
