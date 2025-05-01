@@ -1,7 +1,7 @@
 #include "pkg/motor.h"
 #include "pkg/car.h"
 #include "pkg/comm.h"
-//#include "utils/DRV8833.h"
+#include "pkg/magneto.h"
 #include "Arduino.h"
 
 // -- Definiciones --
@@ -50,6 +50,9 @@ Motor motorB = {MOTOR_B_PIN1, MOTOR_B_PIN2, B};
 // -------------------------------------------------------
 
 void setup() {
+   //Inicializa el Serial, antes de inicializar el magnetometro.
+   Serial.begin(9600);
+   magneto brujula;
 
    pinMode(PLANT_PIN, INPUT);
    
