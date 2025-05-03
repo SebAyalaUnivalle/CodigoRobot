@@ -38,6 +38,14 @@ float DistanciaObjetivo, RotacionObjetivo, PosicionActual[2];
 encoder regla;
 magneto brujula; // Inicializa el Serial a 9600 por su cuenta, no es necesario volver a activarlo posteriormente.
 
+
+// ------------ Constructor de los motores -------------
+DRV8833 driver;
+Motor motorA = {MOTOR_A_PIN1, MOTOR_A_PIN2, A};
+Motor motorB = {MOTOR_B_PIN1, MOTOR_B_PIN2, B};
+// -------------------------------------------------------
+
+
 //-- Funciones --------------------------------------------
 
 // void procesarComando(String cmd) {
@@ -76,6 +84,42 @@ void DefinirObjetivos(float Vector[2]){
    if (RotacionObjetivo < 0) {RotacionObjetivo = RotacionObjetivo + 6.2832;}
  }
 
+//Tomando al motor A como el izquierdo, y el motor B como el derecho.
+void IrHaciaObjetivos(){
+   delay(200);
+   //Comenzar rotacion, girando los motores en direcciones opuestas
+   if((brujula.DireccionActual() - RotacionObjetivo) > 0.034907){ //Rotar a la derecha
+      driver.motorAForward();
+      driver.motorBReverse();
+   }
+   else if((brujula.DireccionActual() - RotacionObjetivo) < -0.034907){ //Rotar a la izquierda
+      driver.motorBForward();
+      driver.motorAReverse();
+   }
+
+   //Continuar rotacion hasta que el robot este a menos de 3° (0.034907 Radianes) del angulo objetivo
+   while(abs(brujula.DireccionActual() - RotacionObjetivo) > 0.034907){
+      delay(10);
+   }
+
+   //Detener el robot y esperar un momento
+   driver.motorAStop();
+   driver.motorBStop();
+   delay(200);
+
+   //Moverse hacia adelante hasta estar a menos de 1cm de la distancia objetivo
+   driver.motorAForward();
+   driver.motorBForward();
+   while((DistanciaObjetivo - regla.GetDistancia()) > 0.01){
+      delay(10);
+   }
+
+   //Detener los motores, y reiniciar el contador de distancia
+   driver.motorAStop();
+   driver.motorBStop();
+   regla.ResetDistancia();
+}
+
 //Pasa un vector del sistema local al sistema global
 void Local_a_Global(float (*Vector)[2]){
    float SavedVector[2] = {(*Vector)[0], (*Vector)[1]};
@@ -91,11 +135,6 @@ void IncrementarDistEncoder(){
 
 //---------------------------------------------------------
 
-// ------------ Constructor de los motores -------------
-DRV8833 driver;
-Motor motorA = {MOTOR_A_PIN1, MOTOR_A_PIN2, A};
-Motor motorB = {MOTOR_B_PIN1, MOTOR_B_PIN2, B};
-// -------------------------------------------------------
 
 void setup() {
    //Inicializar el pin del encoder, y detectar cada vez que este se activa.
@@ -110,6 +149,9 @@ void setup() {
    initMotor(driver, &motorA); 
    initMotor(driver, &motorB);
    // ---------------------------
+
+   //Determina el valor del offset, que arregla los valores de la funcion DireccionActual
+   brujula.SetOffsetMagnetometro(GradosToRad(RotacionInicial)); //La rotacion inicial entra por el bluetooth con un valor en grados.
 
    // -- Logica del carro -- 
    /*Car car(carCoords, 0);
@@ -136,7 +178,14 @@ void loop() {
    }
    
    //Si detecta la planta 
-
+   DefinirObjetivos(PuntoA);
+   IrHaciaObjetivos();
+   PosicionActual[0] = PuntoA[0];
+   PosicionActual[1] = PuntoA[1];
+   DefinirObjetivos(PuntoB);
+   IrHaciaObjetivos();
+   PosicionActual[0] = PuntoB[0];
+   PosicionActual[1] = PuntoB[1];
 }
 
 //FIN

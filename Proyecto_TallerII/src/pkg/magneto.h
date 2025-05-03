@@ -7,9 +7,11 @@ class magneto {
     private:
     HMC5883L magnetometro;
     int16_t magnX, magnY, magnZ;
+    float Offset;
     public:
     magneto();
     ~magneto();
     float DireccionActual();
+    void SetOffsetMagnetometro(float RotacionInicial);
 };
 
