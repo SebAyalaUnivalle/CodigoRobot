@@ -1,7 +1,7 @@
 #define MAGNETO_H
 #include "Wire.h"
-#include "I2Cdev.h"
-#include "HMC5883L.h"
+#include "../utils/I2Cdev.h"
+#include "../utils/HMC5883L.h"
 
 class magneto {
     private:

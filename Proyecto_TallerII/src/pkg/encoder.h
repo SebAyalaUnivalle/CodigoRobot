@@ -3,6 +3,7 @@
 class encoder{
     private:
     double DistanciaRecorrida, LongitudArco;
+    int ultimoTiempo;
     public:
     encoder();
     ~encoder();
