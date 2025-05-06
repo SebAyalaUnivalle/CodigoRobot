@@ -1,8 +1,8 @@
 #include <math.h>
 
 #include "Wire.h"
-#include "I2Cdev.h"
-#include "HMC5883L.h"
+#include "../utils/I2Cdev.h"
+#include "../utils/HMC5883L.h"
 #include "magneto.h"
 
 //Inicializa el magnetometro y los 3 componentes de la fuerza magnetica que detecta el componente.

@@ -1,5 +1,4 @@
 #include "pkg/motor.h"
-#include "pkg/car.h"
 #include "pkg/comm.h"
 #include "pkg/magneto.h"
 #include "pkg/encoder.h"
@@ -20,12 +19,6 @@
 //---------------------------------------------------------
 
 //-- Variables Globales -----------------------------------
-//float posX;
-//float posY;
-//float theta; //Rotación del carro 
-
-//comm bt(2, 8, 0, 1);
-//Coords CoordsIniciales = {0, 0, 0};
 
 //Variables que entran por el bluetooth
 float Xcultivo, Ycultivo, RotacionCultivo, RotacionInicial;
@@ -47,25 +40,6 @@ Motor motorB = {MOTOR_B_PIN1, MOTOR_B_PIN2, B};
 
 
 //-- Funciones --------------------------------------------
-
-// void procesarComando(String cmd) {
-//    if (cmd.startsWith("POS:")) {
-//      int indexTheta = cmd.indexOf("THETA:");
-//      if (indexTheta != -1) {
-//        String posStr = cmd.substring(4, indexTheta - 1);
-//        int coma = posStr.indexOf(',');
-//        posX = posStr.substring(0, coma).toFloat();
-//        posY = posStr.substring(coma + 1).toFloat();
- 
-//        String thetaStr = cmd.substring(indexTheta + 6);
-//        theta = thetaStr.toFloat();
- 
-//        Serial.print("X: "); Serial.println(posX);
-//        Serial.print("Y: "); Serial.println(posY);
-//        Serial.print("θ: "); Serial.println(theta);
-//      }
-//    }
-//  }
 
 //Entra un numero dado en grados y devuelve el mismo en radianes.
 float GradosToRad(float grados){
@@ -153,9 +127,6 @@ void setup() {
    //Determina el valor del offset, que arregla los valores de la funcion DireccionActual
    brujula.SetOffsetMagnetometro(GradosToRad(RotacionInicial)); //La rotacion inicial entra por el bluetooth con un valor en grados.
 
-   // -- Logica del carro -- 
-   /*Car car(carCoords, 0);
-   car.initRoute(car.getCoords(), destinationA);*/
 }  
 
 void loop() {
