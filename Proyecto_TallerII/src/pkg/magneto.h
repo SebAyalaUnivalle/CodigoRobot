@@ -1,12 +1,11 @@
 #define MAGNETO_H
-#include "Wire.h"
-#include "../utils/I2Cdev.h"
-#include "../utils/HMC5883L.h"
+#include <SoftwareSerial.h>
+#include "../utils/QMC5883LCompass.h"
 
 class magneto {
     private:
-    HMC5883L magnetometro;
-    int16_t magnX, magnY, magnZ;
+    QMC5883LCompass magnetometro;
+    int magnX, magnY;
     float Offset;
     public:
     magneto();
