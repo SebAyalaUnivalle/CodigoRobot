@@ -5,7 +5,6 @@
 #define AIN2 5
 #define BIN1 6
 #define BIN2 12 
-#define STBY 8
 
 motor::motor(){}
 
@@ -16,8 +15,7 @@ void motor::init(){
   pinMode(AIN2, OUTPUT);
   pinMode(BIN1, OUTPUT);
   pinMode(BIN2, OUTPUT);
-  pinMode(STBY, OUTPUT);
-  digitalWrite(STBY, HIGH); // Activar el driver
+  //Conectar el pin STBY a +5V
 }
 
 void motor::Detener() {

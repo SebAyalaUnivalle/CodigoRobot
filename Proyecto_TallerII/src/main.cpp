@@ -47,19 +47,22 @@ float RadToGrados(float rad){
 //Funcion que toma el vector objetivo como entrada, calculando la distancia a recorrer y el angulo objetivo (En radianes)
 void DefinirObjetivos(float Vector[2]){
    DistanciaObjetivo = sqrt(pow((Vector[1] - PosicionActual[1]) ,2) + pow((Vector[0] - PosicionActual[0]) ,2));
+   Serial.print("Distancia Objetivo:"); Serial.println(DistanciaObjetivo);
    RotacionObjetivo = atan2(Vector[1] - PosicionActual[1] , Vector[0] - PosicionActual[0]);
    if (RotacionObjetivo < 0) {RotacionObjetivo = RotacionObjetivo + 6.2832;}
+   Serial.print("Rotacion Objetivo:"); Serial.println(RotacionObjetivo);
  }
 
-//Tomando al motor A como el izquierdo, y el motor B como el derecho.
 void IrHaciaObjetivos(){
-   delay(200);
+   delay(500);
    //Comenzar rotacion, girando los motores en direcciones opuestas
    if((brujula.DireccionActual() - RotacionObjetivo) > 0.034907){ //Rotar a la derecha
       rueda.GirarDerecha();
+      Serial.println("Girando a la derecha...");
    }
    else if((brujula.DireccionActual() - RotacionObjetivo) < -0.034907){ //Rotar a la izquierda
       rueda.GirarIzquierda();
+      Serial.println("Girando a la izquierda...");
    }
 
    //Continuar rotacion hasta que el robot este a menos de 3° (0.034907 Radianes) del angulo objetivo
@@ -68,11 +71,13 @@ void IrHaciaObjetivos(){
    }
 
    //Detener el robot y esperar un momento
+   regla.ResetDistancia();
    rueda.Detener();
-   delay(200);
+   delay(500);
 
    //Moverse hacia adelante hasta estar a menos de 5cm de la distancia objetivo
    rueda.Adelante();
+   Serial.println("Moviendo hacia adelante...");
    while((DistanciaObjetivo - regla.GetDistancia()) > 0.05){
       delay(10);
    }
@@ -108,7 +113,7 @@ void setup() {
    //Inicializar el pin del encoder, y detectar cada vez que este se activa.
    pinMode(PIN_ENCODER, INPUT_PULLUP);
    attachInterrupt(digitalPinToInterrupt(PIN_ENCODER), IncrementarDistEncoder, FALLING);
-   pinMode(PLANT_PIN, INPUT);
+   pinMode(PLANT_PIN, INPUT_PULLUP); //El componente debe ser conectado entre el pin de la planta, y un pin GND.
    Serial.println("Pines inicializados!");
 
    //Determina el valor del offset, que arregla los valores de la funcion DireccionActual
@@ -130,10 +135,10 @@ void loop() {
    Serial.println("Calculos de navegacion completados!");
 
    //Espera a que la planta se coloque en su lugar
-   while (digitalRead(PLANT_PIN)==LOW)
+   while (digitalRead(PLANT_PIN)==HIGH)
    {
       Serial.println("Esperando a la planta...");
-      delay(200);
+      delay(500);
    }
    
    //Si detecta la planta
