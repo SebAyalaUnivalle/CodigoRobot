@@ -7,13 +7,10 @@
 // -- Definiciones --
 //Recordar que los pines digitales 0 y 1 son RX y TX, respectivamente. Se usan para el moóulo Bluetooth
 
-#define MOTOR_A_PIN1 3 
-#define MOTOR_A_PIN2 5
-#define MOTOR_B_PIN1 6
-#define MOTOR_B_PIN2 9
 #define PLANT_PIN 7
 #define PIN_ENCODER 2
 
+//Los motores usan los pines digitales 4, 5, 6, 12, y 8.
 //El magnetometro usa los pines analogos A5 y A4.
 
 //---------------------------------------------------------
@@ -27,15 +24,11 @@ float PuntoInicial[2], PuntoA[2], PuntoB [2]; //Indice 0 es X, indice 1 es Y
 //Variables que son calculadas dentro del codigo
 float DistanciaObjetivo, RotacionObjetivo, PosicionActual[2];
 
-//Inicializacion del encoder y el magnetometro
+//Inicializacion de los objetos de los componentes
+motor rueda;
 encoder regla;
 magneto brujula; // Inicializa el Serial a 9600 por su cuenta, no es necesario volver a activarlo posteriormente.
 
-
-// ------------ Constructor de los motores -------------
-DRV8833 driver;
-Motor motorA = {MOTOR_A_PIN1, MOTOR_A_PIN2, A};
-Motor motorB = {MOTOR_B_PIN1, MOTOR_B_PIN2, B};
 // -------------------------------------------------------
 
 
@@ -63,12 +56,10 @@ void IrHaciaObjetivos(){
    delay(200);
    //Comenzar rotacion, girando los motores en direcciones opuestas
    if((brujula.DireccionActual() - RotacionObjetivo) > 0.034907){ //Rotar a la derecha
-      driver.motorAForward();
-      driver.motorBReverse();
+      rueda.GirarDerecha();
    }
    else if((brujula.DireccionActual() - RotacionObjetivo) < -0.034907){ //Rotar a la izquierda
-      driver.motorBForward();
-      driver.motorAReverse();
+      rueda.GirarIzquierda();
    }
 
    //Continuar rotacion hasta que el robot este a menos de 3° (0.034907 Radianes) del angulo objetivo
@@ -77,20 +68,17 @@ void IrHaciaObjetivos(){
    }
 
    //Detener el robot y esperar un momento
-   driver.motorAStop();
-   driver.motorBStop();
+   rueda.Detener();
    delay(200);
 
-   //Moverse hacia adelante hasta estar a menos de 1cm de la distancia objetivo
-   driver.motorAForward();
-   driver.motorBForward();
-   while((DistanciaObjetivo - regla.GetDistancia()) > 0.01){
+   //Moverse hacia adelante hasta estar a menos de 5cm de la distancia objetivo
+   rueda.Adelante();
+   while((DistanciaObjetivo - regla.GetDistancia()) > 0.05){
       delay(10);
    }
 
    //Detener los motores, y reiniciar el contador de distancia
-   driver.motorAStop();
-   driver.motorBStop();
+   rueda.Detener();
    regla.ResetDistancia();
 }
 
@@ -112,17 +100,10 @@ void IncrementarDistEncoder(){
 
 void setup() {
    //Inicializar el pin del encoder, y detectar cada vez que este se activa.
-   pinMode(PIN_ENCODER, INPUT);
+   pinMode(PIN_ENCODER, INPUT_PULLUP);
    attachInterrupt(digitalPinToInterrupt(PIN_ENCODER), IncrementarDistEncoder, FALLING);
 
    pinMode(PLANT_PIN, INPUT);
-   
-   //float initCarSpeed  = 0;
-
-   // -- Inicio de los motores --
-   initMotor(driver, &motorA); 
-   initMotor(driver, &motorB);
-   // ---------------------------
 
    //Determina el valor del offset, que arregla los valores de la funcion DireccionActual
    brujula.SetOffsetMagnetometro(GradosToRad(RotacionInicial)); //La rotacion inicial entra por el bluetooth con un valor en grados.
@@ -143,8 +124,6 @@ void loop() {
    //Espera a que la planta se coloque en su lugar
    while (digitalRead(PLANT_PIN)==LOW)
    {
-      driver.motorAStop();
-      driver.motorBStop();
       delay(200);
    }
    
