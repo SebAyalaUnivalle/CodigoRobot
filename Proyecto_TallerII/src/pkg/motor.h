@@ -4,6 +4,8 @@
 class motor{
     public:
     motor();
+    ~motor();
+    void init();
     void Detener();
     void Adelante();
     void GirarDerecha();

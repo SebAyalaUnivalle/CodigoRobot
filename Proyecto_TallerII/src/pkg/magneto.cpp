@@ -3,14 +3,15 @@
 #include "../utils/QMC5883LCompass.h"
 
 //Inicializa el magnetometro y los 3 componentes de la fuerza magnetica que detecta el componente.
-magneto::magneto(){
+magneto::magneto(){}
+
+magneto::~magneto(){}
+
+void magneto::init(){
     Offset = 0;
-    Serial.begin(9600);
     magnetometro.init();
     magnetometro.setCalibration(-700, 503, -58, 1160,-513,-373); // X_min, X_max, Y_min, Y_max, z_min,z_max  
 }
-
-magneto::~magneto(){}
 
 //Retorna el angulo entre la direccion hacia el frente del robot, y el eje X positivo del sistema global.
 float magneto::DireccionActual(){ //En Radianes

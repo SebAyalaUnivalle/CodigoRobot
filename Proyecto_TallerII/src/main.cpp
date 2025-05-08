@@ -18,8 +18,8 @@
 //-- Variables Globales -----------------------------------
 
 //Variables que entran por el bluetooth
-float Xcultivo, Ycultivo, RotacionCultivo, RotacionInicial;
-float PuntoInicial[2], PuntoA[2], PuntoB [2]; //Indice 0 es X, indice 1 es Y
+float Xcultivo = 0, Ycultivo = 0, RotacionCultivo = 0, RotacionInicial = 0;
+float PuntoInicial[2] = {0,0}, PuntoA[2] = {0.1,0.1}, PuntoB [2] = {0,0.2}; //Indice 0 es X, indice 1 es Y
 
 //Variables que son calculadas dentro del codigo
 float DistanciaObjetivo, RotacionObjetivo, PosicionActual[2];
@@ -99,15 +99,22 @@ void IncrementarDistEncoder(){
 
 
 void setup() {
+   Serial.begin(9600);
+   Serial.println("Inicializando el robot...");
+   brujula.init();
+   rueda.init();
+   regla.init();
+
    //Inicializar el pin del encoder, y detectar cada vez que este se activa.
    pinMode(PIN_ENCODER, INPUT_PULLUP);
    attachInterrupt(digitalPinToInterrupt(PIN_ENCODER), IncrementarDistEncoder, FALLING);
-
    pinMode(PLANT_PIN, INPUT);
+   Serial.println("Pines inicializados!");
 
    //Determina el valor del offset, que arregla los valores de la funcion DireccionActual
    brujula.SetOffsetMagnetometro(GradosToRad(RotacionInicial)); //La rotacion inicial entra por el bluetooth con un valor en grados.
-
+   Serial.println("Offset del magnetometro inicializado!");
+   Serial.println("Robot inicializado!");
 }  
 
 void loop() {
@@ -120,18 +127,23 @@ void loop() {
    RotacionCultivo = GradosToRad(RotacionCultivo); //El dato entra desde el bluetooth con un valor en grados.
    PosicionActual[0] = PuntoInicial[0];
    PosicionActual[1] = PuntoInicial[1];
+   Serial.println("Calculos de navegacion completados!");
 
    //Espera a que la planta se coloque en su lugar
    while (digitalRead(PLANT_PIN)==LOW)
    {
+      Serial.println("Esperando a la planta...");
       delay(200);
    }
    
-   //Si detecta la planta 
+   //Si detecta la planta
+   Serial.println("Planta detectada!");
+   Serial.println("Dirigiendose al punto A...");
    DefinirObjetivos(PuntoA);
    IrHaciaObjetivos();
    PosicionActual[0] = PuntoA[0];
    PosicionActual[1] = PuntoA[1];
+   Serial.println("Dirigiendose al punto B...");
    DefinirObjetivos(PuntoB);
    IrHaciaObjetivos();
    PosicionActual[0] = PuntoB[0];

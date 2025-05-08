@@ -10,6 +10,7 @@ class magneto {
     public:
     magneto();
     ~magneto();
+    void init();
     float DireccionActual();
     void SetOffsetMagnetometro(float RotacionInicial);
 };

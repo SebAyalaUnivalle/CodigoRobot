@@ -3,13 +3,15 @@
 
 #define PIN_ENCODER 2
 
-encoder::encoder(){
-    LongitudArco = 0.00816814; //La distancia en metros que recorre el robot cada vez que el encoder es activado.
-    DistanciaRecorrida = 0;
-    ultimoTiempo = 0;
-}
+encoder::encoder(){}
 
 encoder::~encoder(){}
+
+void encoder::init(){
+  LongitudArco = 0.00816814; //La distancia en metros que recorre el robot cada vez que el encoder es activado.
+  DistanciaRecorrida = 0;
+  ultimoTiempo = 0;
+}
 
 void encoder::IncrementarDistancia(){
   int tiempoActual = micros();

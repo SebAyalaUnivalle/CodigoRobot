@@ -7,7 +7,11 @@
 #define BIN2 12 
 #define STBY 8
 
-motor::motor(){
+motor::motor(){}
+
+motor::~motor(){}
+
+void motor::init(){
   pinMode(AIN1, OUTPUT);
   pinMode(AIN2, OUTPUT);
   pinMode(BIN1, OUTPUT);

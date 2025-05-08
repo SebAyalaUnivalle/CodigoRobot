@@ -7,6 +7,7 @@ class encoder{
     public:
     encoder();
     ~encoder();
+    void init();
     void IncrementarDistancia();
     void ResetDistancia();
     double GetDistancia();
