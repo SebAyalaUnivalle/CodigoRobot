@@ -1,5 +1,4 @@
 #include "pkg/motor.h"
-#include "pkg/comm.h"
 #include "pkg/magneto.h"
 #include "pkg/encoder.h"
 #include "Arduino.h"
@@ -48,6 +47,22 @@ float RadToGrados(float rad){
 
 double DistPromedioEncoders(){
    return ((regla_A.GetDistancia() + regla_B.GetDistancia())/2.0);
+}
+
+float GetVelocidad()
+{
+    static double ultimaDistancia = 0;
+    static unsigned long ultimoTiempo = micros();
+
+    double distanciaActual = DistPromedioEncoders();
+    unsigned long tiempoActual = micros();
+
+    double velocidad = (distanciaActual - ultimaDistancia) / ((tiempoActual - ultimoTiempo) / 1000000); // Convertimos us a s
+
+    ultimaDistancia = distanciaActual;
+    ultimoTiempo = tiempoActual;
+
+    return velocidad; // Expresada en m/s
 }
 
 //Funcion que toma el vector objetivo como entrada, calculando la distancia a recorrer y el angulo objetivo (En radianes)
