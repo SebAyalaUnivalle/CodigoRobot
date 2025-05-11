@@ -2,6 +2,7 @@
 #include "pkg/magneto.h"
 #include "pkg/encoder.h"
 #include "Arduino.h"
+#include <SoftwareSerial.h>
 
 // -- Definiciones --
 //Recordar que los pines digitales 0 y 1 son RX y TX, respectivamente. Se usan para el moóulo Bluetooth
@@ -19,7 +20,7 @@
 
 //Variables que entran por el bluetooth
 float Xcultivo = 0, Ycultivo = 0, RotacionCultivo = 0, RotacionInicial = 0;
-float PuntoInicial[2] = {0,0}, PuntoA[2] = {0.1,0.1}, PuntoB [2] = {0,0.2}; //Indice 0 es X, indice 1 es Y
+float PuntoInicial[2] = {0,0}, PuntoB[2] = {0.1,0.1}, PuntoC [2] = {0,0.2}; //Indice 0 es X, indice 1 es Y
 
 //Variables que son calculadas dentro del codigo
 float DistanciaObjetivo, RotacionObjetivo, PosicionActual[2];
@@ -29,11 +30,77 @@ motor rueda;
 encoder regla_A;
 encoder regla_B;
 magneto brujula;
+SoftwareSerial BT(1,0); //(RX TX) Inicalización del módulo Bluetooth HC05
 
 // -------------------------------------------------------
 
 
 //-- Funciones --------------------------------------------
+
+//Entran los datos de los puntos y del cultivo como un String con varios caracteres. La función los separa
+
+void procesarComando(String cmd) {
+  // Verificar si es un comando válido (debe empezar con $ y terminar con @)
+  if (cmd.startsWith("$") && cmd.endsWith("@")) {
+    // Eliminar los caracteres de inicio y fin
+    cmd = cmd.substring(1, cmd.length() - 1);
+    
+    // Dividir la cadena por punto y coma para obtener cada segmento
+    int separador1 = cmd.indexOf(';');
+    int separador2 = cmd.indexOf(';', separador1 + 1);
+    int separador3 = cmd.indexOf(';', separador2 + 1);
+    
+    if (separador1 != -1) {
+      // Procesar segmento 1: CoordXA, CoordYA, AnguloRobot
+      String segmento1 = cmd.substring(0, separador1);
+      int coma1 = segmento1.indexOf(',');
+      int coma2 = segmento1.indexOf(',', coma1 + 1);
+      
+      if (coma1 != -1 && coma2 != -1) {
+        PuntoInicial[0] = segmento1.substring(0, coma1).toFloat();
+        PuntoInicial[1] = segmento1.substring(coma1 + 1, coma2).toFloat();
+        RotacionInicial = segmento1.substring(coma2 + 1).toFloat();
+      }
+      
+      // Procesar segmento 2: CoordXB, CoordYB
+      if (separador2 != -1) {
+        String segmento2 = cmd.substring(separador1 + 1, separador2);
+        int coma3 = segmento2.indexOf(',');
+        
+        if (coma3 != -1) {
+          PuntoB[0] = segmento2.substring(0, coma3).toFloat();
+          PuntoB[1] = segmento2.substring(coma3 + 1).toFloat();
+        }
+        
+        // Procesar segmento 3: CoordXC, CoordYC
+        if (separador3 != -1) {
+          String segmento3 = cmd.substring(separador2 + 1, separador3);
+          int coma4 = segmento3.indexOf(',');
+          
+          if (coma4 != -1) {
+            PuntoC[0] = segmento3.substring(0, coma4).toFloat();
+            PuntoC[1] = segmento3.substring(coma4 + 1).toFloat();
+          }
+          
+          // Procesar segmento 4: CoordXCultivo, CoordYCultivo, AnguloCultivo
+          String segmento4 = cmd.substring(separador3 + 1);
+          int coma5 = segmento4.indexOf(',');
+          int coma6 = segmento4.indexOf(',', coma5 + 1);
+          
+          if (coma5 != -1 && coma6 != -1) {
+            Xcultivo = segmento4.substring(0, coma5).toFloat();
+            Ycultivo = segmento4.substring(coma5 + 1, coma6).toFloat();
+            RotacionCultivo = segmento4.substring(coma6 + 1).toFloat();
+          }
+        }
+      }
+    }
+  } 
+  else if (cmd == "S") {
+    // Comando de parada
+    rueda.Detener();
+  }
+}
 
 //Entra un numero dado en grados y devuelve el mismo en radianes.
 float GradosToRad(float grados){
@@ -64,6 +131,20 @@ float GetVelocidad()
 
     return velocidad; // Expresada en m/s
 }
+
+//Manda los datos de movimiento del robot a la App, para ser visualizados
+void enviarPosicionActual() {
+  float velocidad = GetVelocidad();
+  String mensaje = "";
+
+  mensaje += String(velocidad, 2) + ","; // Velocidad
+  mensaje += String(RadToGrados(brujula.DireccionActual()), 2) + ","; // Ángulo
+  mensaje += String(PosicionActual[0], 2) + ","; // X
+  mensaje += String(PosicionActual[1], 2); // Y
+
+  BT.println(mensaje); // '\n' se usa como delimitador
+}
+
 
 //Funcion que toma el vector objetivo como entrada, calculando la distancia a recorrer y el angulo objetivo (En radianes)
 void DefinirObjetivos(float Vector[2]){
@@ -126,6 +207,7 @@ void IncrementarDistEncoder_B() {regla_B.IncrementarDistancia();}
 
 
 void setup() {
+   BT.begin(9600);
    Serial.begin(9600);
    Serial.println("Inicializando el robot...");
    brujula.init();
@@ -149,11 +231,24 @@ void setup() {
 
 void loop() {
 
+   //Recepción de datos de los puntos y del cultivo
+   static String Comando = "";
+   while (BT.available()){
+      char C = BT.read();
+      if (C == '@'){
+         Comando += C;
+         procesarComando(Comando);
+         Comando = "";
+      }
+      else 
+      Comando += C; 
+   }
+
    // !!!   EL CODIGO DESPUES DE ESTE COMENTARIO SOLO SE DEBE EJECUTAR DESPUES DE REALIZAR LA CONEXION
    //   BLUETOOTH, Y HABER RECIBIDO LOS DATOS NECESARIOS PARA LA NAVEGACION POR MEDIO DE ESTA   !!!
 
-   Local_a_Global(&PuntoA);
    Local_a_Global(&PuntoB);
+   Local_a_Global(&PuntoC);
    RotacionCultivo = GradosToRad(RotacionCultivo); //El dato entra desde el bluetooth con un valor en grados.
    PosicionActual[0] = PuntoInicial[0];
    PosicionActual[1] = PuntoInicial[1];
@@ -167,17 +262,18 @@ void loop() {
    }
    
    //Si detecta la planta
+   //Parte de un Punto Global A, y se dirige a dos puntos Locales, primero el B, y luego el C.
    Serial.println("Planta detectada!");
-   Serial.println("Dirigiendose al punto A...");
-   DefinirObjetivos(PuntoA);
-   IrHaciaObjetivos();
-   PosicionActual[0] = PuntoA[0];
-   PosicionActual[1] = PuntoA[1];
    Serial.println("Dirigiendose al punto B...");
    DefinirObjetivos(PuntoB);
    IrHaciaObjetivos();
    PosicionActual[0] = PuntoB[0];
    PosicionActual[1] = PuntoB[1];
+   Serial.println("Dirigiendose al punto C...");
+   DefinirObjetivos(PuntoC);
+   IrHaciaObjetivos();
+   PosicionActual[0] = PuntoC[0];
+   PosicionActual[1] = PuntoC[1];
 }
 
 //FIN
