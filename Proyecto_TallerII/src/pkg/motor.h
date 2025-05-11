@@ -10,4 +10,7 @@ class motor{
     void Adelante();
     void GirarDerecha();
     void GirarIzquierda();
+    void Adelante(int speed);
+    void GirarDerecha(int speed);
+    void GirarIzquierda(int speed);
 };

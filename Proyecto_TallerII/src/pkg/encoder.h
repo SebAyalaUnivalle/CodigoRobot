@@ -2,8 +2,9 @@
 
 class encoder{
     private:
-    double DistanciaRecorrida, LongitudArco;
-    int ultimoTiempo;
+    double DistanciaRecorrida;
+    const double LongitudArco = 0.00816814; //La distancia en metros que recorre el robot cada vez que el encoder es activado.
+    unsigned long ultimoTiempo;
     public:
     encoder();
     ~encoder();

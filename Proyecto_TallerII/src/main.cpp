@@ -8,7 +8,8 @@
 //Recordar que los pines digitales 0 y 1 son RX y TX, respectivamente. Se usan para el moóulo Bluetooth
 
 #define PLANT_PIN 7
-#define PIN_ENCODER 2
+#define PIN_ENCODER_A 2
+#define PIN_ENCODER_B 3
 
 //Los motores usan los pines digitales 4, 5, 6, 12, y 8.
 //El magnetometro usa los pines analogos A5 y A4.
@@ -26,8 +27,9 @@ float DistanciaObjetivo, RotacionObjetivo, PosicionActual[2];
 
 //Inicializacion de los objetos de los componentes
 motor rueda;
-encoder regla;
-magneto brujula; // Inicializa el Serial a 9600 por su cuenta, no es necesario volver a activarlo posteriormente.
+encoder regla_A;
+encoder regla_B;
+magneto brujula;
 
 // -------------------------------------------------------
 
@@ -43,6 +45,10 @@ float GradosToRad(float grados){
 float RadToGrados(float rad){
    return rad * 57.29578;
  }
+
+double DistPromedioEncoders(){
+   return ((regla_A.GetDistancia() + regla_B.GetDistancia())/2.0);
+}
 
 //Funcion que toma el vector objetivo como entrada, calculando la distancia a recorrer y el angulo objetivo (En radianes)
 void DefinirObjetivos(float Vector[2]){
@@ -71,20 +77,22 @@ void IrHaciaObjetivos(){
    }
 
    //Detener el robot y esperar un momento
-   regla.ResetDistancia();
+   regla_A.ResetDistancia();
+   regla_B.ResetDistancia();
    rueda.Detener();
    delay(500);
 
    //Moverse hacia adelante hasta estar a menos de 5cm de la distancia objetivo
    rueda.Adelante();
    Serial.println("Moviendo hacia adelante...");
-   while((DistanciaObjetivo - regla.GetDistancia()) > 0.05){
+   while((DistanciaObjetivo - DistPromedioEncoders()) > 0.05){
       delay(10);
    }
 
    //Detener los motores, y reiniciar el contador de distancia
    rueda.Detener();
-   regla.ResetDistancia();
+   regla_A.ResetDistancia();
+   regla_B.ResetDistancia();
 }
 
 //Pasa un vector del sistema local al sistema global
@@ -96,9 +104,8 @@ void Local_a_Global(float (*Vector)[2]){
  }
 
 //Cada vez que se activa el encoder, llama a la funcion del objeto.
-void IncrementarDistEncoder(){
-   regla.IncrementarDistancia();
-}
+void IncrementarDistEncoder_A() {regla_A.IncrementarDistancia();}
+void IncrementarDistEncoder_B() {regla_B.IncrementarDistancia();}
 
 //---------------------------------------------------------
 
@@ -108,11 +115,14 @@ void setup() {
    Serial.println("Inicializando el robot...");
    brujula.init();
    rueda.init();
-   regla.init();
+   regla_A.init();
+   regla_B.init();
 
    //Inicializar el pin del encoder, y detectar cada vez que este se activa.
-   pinMode(PIN_ENCODER, INPUT_PULLUP);
-   attachInterrupt(digitalPinToInterrupt(PIN_ENCODER), IncrementarDistEncoder, FALLING);
+   pinMode(PIN_ENCODER_A, INPUT_PULLUP);
+   pinMode(PIN_ENCODER_B, INPUT_PULLUP);
+   attachInterrupt(digitalPinToInterrupt(PIN_ENCODER_A), IncrementarDistEncoder_A, FALLING);
+   attachInterrupt(digitalPinToInterrupt(PIN_ENCODER_B), IncrementarDistEncoder_B, FALLING);
    pinMode(PLANT_PIN, INPUT_PULLUP); //El componente debe ser conectado entre el pin de la planta, y un pin GND.
    Serial.println("Pines inicializados!");
 

@@ -39,3 +39,24 @@ void motor::GirarIzquierda() {
     digitalWrite(AIN1, HIGH);
     digitalWrite(BIN2, HIGH);
   }
+
+void motor::Adelante(int speed) {
+    analogWrite(AIN1, speed);
+    digitalWrite(AIN2, LOW);
+    analogWrite(BIN1, speed);
+    digitalWrite(BIN2, LOW);
+  }
+
+void motor::GirarDerecha(int speed) {
+    analogWrite(AIN2, speed);
+    digitalWrite(AIN1, LOW);
+    analogWrite(BIN1, speed);
+    digitalWrite(BIN2, LOW);
+  }
+
+void motor::GirarIzquierda(int speed) {
+    analogWrite(AIN1, speed);
+    digitalWrite(AIN2, LOW);
+    analogWrite(BIN2, speed);
+    digitalWrite(BIN1, LOW);
+  }
