@@ -274,6 +274,16 @@ void loop() {
    IrHaciaObjetivos();
    PosicionActual[0] = PuntoC[0];
    PosicionActual[1] = PuntoC[1];
+   Serial.println("Dirigiendose al punto B...");
+   DefinirObjetivos(PuntoB);
+   IrHaciaObjetivos();
+   PosicionActual[0] = PuntoB[0];
+   PosicionActual[1] = PuntoB[1];
+   Serial.println("Volviendo a la posicion inicial...");
+   DefinirObjetivos(PuntoInicial);
+   IrHaciaObjetivos();
+   PosicionActual[0] = PuntoInicial[0];
+   PosicionActual[1] = PuntoInicial[1];
 }
 
 //FIN
