@@ -19,44 +19,23 @@ void motor::init(){
 }
 
 void motor::Detener() {
-  digitalWrite(AIN1, LOW);
-  digitalWrite(AIN2, LOW);
-  digitalWrite(BIN1, LOW);
-  digitalWrite(BIN2, LOW);
+  analogWrite(AIN1, LOW);
+  analogWrite(AIN2, LOW);
+  analogWrite(BIN1, LOW);
+  analogWrite(BIN2, LOW);
 }
 
 void motor::Adelante() {
-    digitalWrite(AIN1, HIGH);
-    digitalWrite(BIN1, HIGH);
+    analogWrite(AIN2, 130);
+    analogWrite(BIN2, 130);
   }
 
 void motor::GirarDerecha() {
-    digitalWrite(AIN2, HIGH);
-    digitalWrite(BIN1, HIGH);
+    analogWrite(AIN2, 130);
+    analogWrite(BIN1, 130);
   }
 
 void motor::GirarIzquierda() {
-    digitalWrite(AIN1, HIGH);
-    digitalWrite(BIN2, HIGH);
-  }
-
-void motor::Adelante(int speed) {
-    analogWrite(AIN1, speed);
-    digitalWrite(AIN2, LOW);
-    analogWrite(BIN1, speed);
-    digitalWrite(BIN2, LOW);
-  }
-
-void motor::GirarDerecha(int speed) {
-    analogWrite(AIN2, speed);
-    digitalWrite(AIN1, LOW);
-    analogWrite(BIN1, speed);
-    digitalWrite(BIN2, LOW);
-  }
-
-void motor::GirarIzquierda(int speed) {
-    analogWrite(AIN1, speed);
-    digitalWrite(AIN2, LOW);
-    analogWrite(BIN2, speed);
-    digitalWrite(BIN1, LOW);
+    analogWrite(AIN1, 130);
+    analogWrite(BIN2, 130);
   }

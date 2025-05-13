@@ -6,12 +6,9 @@ class magneto {
     private:
     QMC5883LCompass magnetometro;
     int magnX, magnY;
-    float Offset;
     public:
     magneto();
     ~magneto();
     void init();
-    float DireccionActual();
-    void SetOffsetMagnetometro(float RotacionInicial);
+    float DireccionMagnetica();
 };
-

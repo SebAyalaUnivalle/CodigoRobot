@@ -19,11 +19,11 @@
 //-- Variables Globales -----------------------------------
 
 //Variables que entran por el bluetooth
-float Xcultivo = 0, Ycultivo = 0, RotacionCultivo = 0, RotacionInicial = 0;
-float PuntoInicial[2] = {0,0}, PuntoB[2] = {0.1,0.1}, PuntoC [2] = {0,0.2}; //Indice 0 es X, indice 1 es Y
+float Xcultivo = 0, Ycultivo = 0, RotacionCultivo = 0, AnguloInicial = 0;
+float PuntoInicial[2] = {0,0}, PuntoB[2] = {0,-0.1}, PuntoC [2] = {0.1,0.1}; //Indice 0 es X, indice 1 es Y
 
 //Variables que son calculadas dentro del codigo
-float DistanciaObjetivo, RotacionObjetivo, PosicionActual[2];
+float DistanciaObjetivo, AnguloObjetivo, AnguloActual, PosicionActual[2];
 
 //Inicializacion de los objetos de los componentes
 motor rueda;
@@ -59,7 +59,7 @@ void procesarComando(String cmd) {
       if (coma1 != -1 && coma2 != -1) {
         PuntoInicial[0] = segmento1.substring(0, coma1).toFloat();
         PuntoInicial[1] = segmento1.substring(coma1 + 1, coma2).toFloat();
-        RotacionInicial = segmento1.substring(coma2 + 1).toFloat();
+        AnguloInicial = segmento1.substring(coma2 + 1).toFloat();
       }
       
       // Procesar segmento 2: CoordXB, CoordYB
@@ -138,7 +138,7 @@ void enviarPosicionActual() {
   String mensaje = "";
 
   mensaje += String(velocidad, 2) + ","; // Velocidad
-  mensaje += String(RadToGrados(brujula.DireccionActual()), 2) + ","; // Ángulo
+  mensaje += String(RadToGrados(brujula.DireccionMagnetica()), 2) + ","; // Ángulo
   mensaje += String(PosicionActual[0], 2) + ","; // X
   mensaje += String(PosicionActual[1], 2); // Y
 
@@ -150,25 +150,33 @@ void enviarPosicionActual() {
 void DefinirObjetivos(float Vector[2]){
    DistanciaObjetivo = sqrt(pow((Vector[1] - PosicionActual[1]) ,2) + pow((Vector[0] - PosicionActual[0]) ,2));
    Serial.print("Distancia Objetivo:"); Serial.println(DistanciaObjetivo);
-   RotacionObjetivo = atan2(Vector[1] - PosicionActual[1] , Vector[0] - PosicionActual[0]);
-   if (RotacionObjetivo < 0) {RotacionObjetivo = RotacionObjetivo + 6.2832;}
-   Serial.print("Rotacion Objetivo:"); Serial.println(RotacionObjetivo);
+
+   AnguloObjetivo = atan2(Vector[1] - PosicionActual[1] , Vector[0] - PosicionActual[0]);
+   if (AnguloObjetivo < 0) {AnguloObjetivo = AnguloObjetivo + 6.2832;}
+   Serial.print("Angulo Objetivo:"); Serial.println(AnguloObjetivo);
  }
 
 void IrHaciaObjetivos(){
    delay(500);
+
+   float AnguloMagneticoObjetivo = brujula.DireccionMagnetica() + (AnguloActual - AnguloObjetivo);
+   if(AnguloMagneticoObjetivo<0){AnguloMagneticoObjetivo += 6.2832;}
+   Serial.println(AnguloMagneticoObjetivo);
+
    //Comenzar rotacion, girando los motores en direcciones opuestas
-   if((brujula.DireccionActual() - RotacionObjetivo) > 0.034907){ //Rotar a la derecha
+   if((AnguloMagneticoObjetivo - brujula.DireccionMagnetica()) > 0.06){ //Rotar a la derecha
       rueda.GirarDerecha();
       Serial.println("Girando a la derecha...");
    }
-   else if((brujula.DireccionActual() - RotacionObjetivo) < -0.034907){ //Rotar a la izquierda
+   else if((AnguloMagneticoObjetivo - brujula.DireccionMagnetica()) < -0.06){ //Rotar a la izquierda
       rueda.GirarIzquierda();
       Serial.println("Girando a la izquierda...");
    }
 
-   //Continuar rotacion hasta que el robot este a menos de 3° (0.034907 Radianes) del angulo objetivo
-   while(abs(brujula.DireccionActual() - RotacionObjetivo) > 0.034907){
+   //Continuar rotacion hasta que el robot este a alrededor de 3° del angulo objetivo
+   while(abs(AnguloMagneticoObjetivo - brujula.DireccionMagnetica()) > 0.06){
+      Serial.print("Direccion actual: "); Serial.println(brujula.DireccionMagnetica());
+      Serial.print("Diferencia: "); Serial.println(abs(AnguloMagneticoObjetivo - brujula.DireccionMagnetica()));
       delay(10);
    }
 
@@ -223,9 +231,6 @@ void setup() {
    pinMode(PLANT_PIN, INPUT_PULLUP); //El componente debe ser conectado entre el pin de la planta, y un pin GND.
    Serial.println("Pines inicializados!");
 
-   //Determina el valor del offset, que arregla los valores de la funcion DireccionActual
-   brujula.SetOffsetMagnetometro(GradosToRad(RotacionInicial)); //La rotacion inicial entra por el bluetooth con un valor en grados.
-   Serial.println("Offset del magnetometro inicializado!");
    Serial.println("Robot inicializado!");
 }  
 
@@ -250,6 +255,7 @@ void loop() {
    Local_a_Global(&PuntoB);
    Local_a_Global(&PuntoC);
    RotacionCultivo = GradosToRad(RotacionCultivo); //El dato entra desde el bluetooth con un valor en grados.
+   AnguloActual = GradosToRad(AnguloInicial);
    PosicionActual[0] = PuntoInicial[0];
    PosicionActual[1] = PuntoInicial[1];
    Serial.println("Calculos de navegacion completados!");
@@ -269,21 +275,25 @@ void loop() {
    IrHaciaObjetivos();
    PosicionActual[0] = PuntoB[0];
    PosicionActual[1] = PuntoB[1];
+   AnguloActual = AnguloObjetivo;
    Serial.println("Dirigiendose al punto C...");
    DefinirObjetivos(PuntoC);
    IrHaciaObjetivos();
    PosicionActual[0] = PuntoC[0];
    PosicionActual[1] = PuntoC[1];
+   AnguloActual = AnguloObjetivo;
    Serial.println("Dirigiendose al punto B...");
    DefinirObjetivos(PuntoB);
    IrHaciaObjetivos();
    PosicionActual[0] = PuntoB[0];
    PosicionActual[1] = PuntoB[1];
+   AnguloActual = AnguloObjetivo;
    Serial.println("Volviendo a la posicion inicial...");
    DefinirObjetivos(PuntoInicial);
    IrHaciaObjetivos();
    PosicionActual[0] = PuntoInicial[0];
    PosicionActual[1] = PuntoInicial[1];
+   AnguloActual = AnguloObjetivo;
 }
 
 //FIN
