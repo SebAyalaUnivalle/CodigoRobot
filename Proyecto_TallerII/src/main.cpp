@@ -20,7 +20,7 @@
 
 //Variables que entran por el bluetooth
 float Xcultivo = 0, Ycultivo = 0, RotacionCultivo = 0, AnguloInicial = 0;
-float PuntoInicial[2] = {0,0}, PuntoB[2] = {0,-0.1}, PuntoC [2] = {0.1,0.1}; //Indice 0 es X, indice 1 es Y
+float PuntoInicial[2] = {0,0}, PuntoB[2] = {0,0.5}, PuntoC [2] = {0.5,0.5}; //Indice 0 es X, indice 1 es Y
 
 //Variables que son calculadas dentro del codigo
 float DistanciaObjetivo, AnguloObjetivo, AnguloActual, PosicionActual[2];
@@ -190,6 +190,7 @@ void IrHaciaObjetivos(){
    rueda.Adelante();
    Serial.println("Moviendo hacia adelante...");
    while((DistanciaObjetivo - DistPromedioEncoders()) > 0.05){
+    Serial.print("Distancia Recorrida:  "); Serial.println(DistPromedioEncoders());
       delay(10);
    }
 
@@ -235,6 +236,7 @@ void setup() {
 }  
 
 void loop() {
+    bool detener = false;
 
    //Recepción de datos de los puntos y del cultivo
    static String Comando = "";
@@ -294,6 +296,7 @@ void loop() {
    PosicionActual[0] = PuntoInicial[0];
    PosicionActual[1] = PuntoInicial[1];
    AnguloActual = AnguloObjetivo;
+   while(detener==false){delay(100);}
 }
 
 //FIN

@@ -9,7 +9,7 @@ magneto::~magneto(){}
 
 void magneto::init(){
     magnetometro.init();
-    magnetometro.setCalibration(-1206, 660, -1167, 676, -42, 426); // X_min, X_max, Y_min, Y_max, z_min,z_max  
+    magnetometro.setCalibration(-1095, 553, -863, 913, -1021, 797); // X_min, X_max, Y_min, Y_max, z_min,z_max  
 }
 
 //Retorna el angulo entre la direccion hacia el frente del robot, y el eje X positivo del sistema global.
@@ -18,7 +18,7 @@ float magneto::DireccionMagnetica(){ //En Radianes
     for(int i=0; i<3; i++){
         magnetometro.read();
         float anguloTemp;
-        magnX = magnetometro.getX();
+        magnX = -magnetometro.getX();
         magnY = magnetometro.getY();
         anguloTemp = atan2(magnY, magnX);
         if (anguloTemp < 0){anguloTemp += 6.28319;}
