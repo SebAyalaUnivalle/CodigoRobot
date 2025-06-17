@@ -22,23 +22,23 @@ void motor::init(){
 }
 
 void motor::Detener() {
-  analogWrite(AIN1, LOW);
-  analogWrite(AIN2, LOW);
-  analogWrite(BIN1, LOW);
-  analogWrite(BIN2, LOW);
+  analogWrite(AIN1, 0);
+  analogWrite(AIN2, 0);
+  analogWrite(BIN1, 0);
+  analogWrite(BIN2, 0);
 }
 
 void motor::Adelante() {
-    analogWrite(AIN2, 140);
-    analogWrite(BIN2, 140);
+    analogWrite(AIN2, 150);
+    analogWrite(BIN2, 150);
   }
 
 void motor::GirarDerecha() {
-    analogWrite(AIN1, 140);
-    analogWrite(BIN2, 140);
+    analogWrite(AIN1, 150);
+    analogWrite(BIN2, 150);
   }
 
 void motor::GirarIzquierda() {
-    analogWrite(AIN2, 140);
-    analogWrite(BIN1, 140);
+    analogWrite(AIN2, 150);
+    analogWrite(BIN1, 150);
   }

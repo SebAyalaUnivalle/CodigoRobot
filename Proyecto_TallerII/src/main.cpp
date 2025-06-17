@@ -188,21 +188,21 @@ void IrHaciaObjetivos(){
    Serial.println(AnguloMagneticoObjetivo);
 
    //Comenzar rotacion, girando los motores en direcciones opuestas
-   if((AnguloMagneticoObjetivo - brujula.DireccionMagnetica()) > 0.06){ //Rotar a la derecha
+   if((AnguloMagneticoObjetivo - brujula.DireccionMagnetica()) > 0.08){ //Rotar a la derecha
       rueda.GirarDerecha();
       void enviarPosicionActual();
       //Serial.println("Girando a la derecha...");
    }
-   else if((AnguloMagneticoObjetivo - brujula.DireccionMagnetica()) < -0.06){ //Rotar a la izquierda
+   else if((AnguloMagneticoObjetivo - brujula.DireccionMagnetica()) < -0.08){ //Rotar a la izquierda
       rueda.GirarIzquierda();
       void enviarPosicionActual();
       //Serial.println("Girando a la izquierda...");
    }
 
    //Continuar rotacion hasta que el robot este a alrededor de 3° del angulo objetivo
-   while(abs(AnguloMagneticoObjetivo - brujula.DireccionMagnetica()) > 0.06){
-      Serial.print("Direccion actual: "); Serial.println(brujula.DireccionMagnetica());
-      Serial.print("Diferencia: "); Serial.println(abs(AnguloMagneticoObjetivo - brujula.DireccionMagnetica()));
+   while(abs(AnguloMagneticoObjetivo - brujula.DireccionMagnetica()) > 0.08){
+      Serial.print("Direccion actual: "); Serial.println(RadToGrados(brujula.DireccionMagnetica()));
+      Serial.print("Diferencia: "); Serial.println(RadToGrados(abs(AnguloMagneticoObjetivo - brujula.DireccionMagnetica())));
       void enviarPosicionActual();
       delay(10);
    }
@@ -217,7 +217,7 @@ void IrHaciaObjetivos(){
    //Moverse hacia adelante hasta estar a menos de 5cm de la distancia objetivo
    rueda.Adelante();
    Serial.println("Moviendo hacia adelante...");
-   while((DistanciaObjetivo - DistPromedioEncoders()) > 0.05){
+   while((DistanciaObjetivo - DistPromedioEncoders()) > 0.08){
     void enviarPosicionActual();
     Serial.print("Distancia Recorrida:  "); Serial.println(DistPromedioEncoders());
       delay(10);
