@@ -268,15 +268,18 @@ void setup() {
 
 void loop() {
    // bool detener = false;
+    Serial.println("Iniciando loop...");
     digitalWrite(LED_red, HIGH);
-    analogWrite(LED_green, LOW);
+    digitalWrite(LED_green, LOW);
 
 
    //Recepción de datos de los puntos y del cultivo
    static String Comando = "";
    static bool comandoIniciado = false;
    
-   while (BT.available()){
+   while(BT.available()==0){delay(500); Serial.println("Esperando datos...");}
+
+   while (BT.available()>0){
       char C = BT.read();
       
       // Detectar inicio de comando
@@ -331,17 +334,16 @@ void loop() {
 
 
    //Espera a que la planta se coloque en su lugar
-   /*while (digitalRead(PLANT_PIN)==HIGH)
+   while (digitalRead(PLANT_PIN)==HIGH)
    {
       Serial.println("Esperando a la planta...");
       delay(500);
-   }*/
+   }
    
    //Si detecta la planta
    //Parte de un Punto Global A, y se dirige a dos puntos Locales, primero el B, y luego el C.
-   if(digitalRead(PLANT_PIN)==LOW){
-      analogWrite(LED_red,LOW);
-      analogWrite(LED_green,intensidad);
+      digitalWrite(LED_red,LOW);
+      digitalWrite(LED_green,HIGH);
       Serial.println("Planta detectada!");
       Serial.println("Dirigiendose al punto B...");
       DefinirObjetivos(PuntoB);    //  Dentro de estas dos funciones deben incluirse la funcion encargada de enviar los datos del robot
@@ -357,15 +359,13 @@ void loop() {
       AnguloActual = AnguloObjetivo;
 
    //Antes de volver al origen, la planta debe ser recolectada en el punto C.
-
+      void enviarPosicionActual();
+      digitalWrite(LED_red,HIGH);
       while(digitalRead(PLANT_PIN)==LOW){
-        void enviarPosicionActual();
         Serial.println("Esperando Recolección de planta...");
-        digitalWrite(LED_red,HIGH);
-        digitalWrite(LED_green,LOW);
+        delay(500);
       }
 
-      digitalWrite(LED_green,LOW);
       digitalWrite(LED_red,LOW);
       
       Serial.println("Dirigiendose al punto B...");
@@ -381,12 +381,8 @@ void loop() {
       PosicionActual[1] = PuntoInicial[1];
       AnguloActual = AnguloObjetivo;
       //while(detener==false){delay(100);} Quite esto por que la idea es que el robot pueda volver a ponerse operativo
-      delay(100);
-   
-   } else{
-        rueda.Detener();
-   }
-   delay(500);
+      Serial.println("Final del loop alcanzado!");
+      delay(500);
 }
 
 //FIN

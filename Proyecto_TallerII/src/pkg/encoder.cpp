@@ -13,8 +13,8 @@ void encoder::init(){
 void encoder::IncrementarDistancia(){
   unsigned int tiempoActual = millis();
 
-  // Hacer que el tiempo minimo entre cada medicion sea 250us
-  if (tiempoActual - ultimoTiempo > 17) {
+  // Hacer que el tiempo minimo entre cada medicion sea 17ms
+  if (tiempoActual - ultimoTiempo > 10) {
     DistanciaRecorrida = DistanciaRecorrida + LongitudArco;
   }
   
