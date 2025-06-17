@@ -9,7 +9,7 @@ magneto::~magneto(){}
 
 void magneto::init(){
     magnetometro.init();
-    magnetometro.setCalibration(-1095, 553, -863, 913, -1021, 797); // X_min, X_max, Y_min, Y_max, z_min,z_max  
+    magnetometro.setCalibration(-876, 523, -1235, 263, -636, 815); // X_min, X_max, Y_min, Y_max, z_min,z_max  
 }
 
 //Retorna el angulo entre la direccion hacia el frente del robot, y el eje X positivo del sistema global.

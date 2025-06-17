@@ -1,10 +1,13 @@
 #include "motor.h"
 
 //Pines del controlador DRV8833 conectados al Arduino
-#define AIN1 4
-#define AIN2 5
-#define BIN1 6
-#define BIN2 12 
+#define AIN2 4
+#define AIN1 5
+
+#define BIN2 6
+#define BIN1 12 
+
+//cambie el orden porque los conecte mal xd atte:santiago
 
 motor::motor(){}
 
@@ -26,16 +29,16 @@ void motor::Detener() {
 }
 
 void motor::Adelante() {
-    analogWrite(AIN2, 140);
-    analogWrite(BIN2, 140);
+    analogWrite(AIN2, 200);
+    analogWrite(BIN2, 200);
   }
 
 void motor::GirarDerecha() {
-    analogWrite(AIN1, 140);
-    analogWrite(BIN2, 140);
+    analogWrite(AIN1, 200);
+    analogWrite(BIN2, 200);
   }
 
 void motor::GirarIzquierda() {
-    analogWrite(AIN2, 140);
-    analogWrite(BIN1, 140);
+    analogWrite(AIN2, 200);
+    analogWrite(BIN1, 200);
   }

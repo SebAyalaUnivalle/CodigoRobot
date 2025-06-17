@@ -10,6 +10,9 @@
 #define PLANT_PIN 7
 #define PIN_ENCODER_A 2
 #define PIN_ENCODER_B 3
+#define LED_green 9
+#define LED_red 8
+#define intensidad 120
 
 //Los motores usan los pines digitales 4, 5, 6, 12, y 8.
 //El magnetometro usa los pines analogos A5 y A4.
@@ -30,77 +33,97 @@ motor rueda;
 encoder regla_A;
 encoder regla_B;
 magneto brujula;
-SoftwareSerial BT(1,0); //(RX TX) Inicalización del módulo Bluetooth HC05
+SoftwareSerial BT(11,10); //(RX TX) Inicalización del módulo Bluetooth HM10
 
 // -------------------------------------------------------
-
 
 //-- Funciones --------------------------------------------
 
 //Entran los datos de los puntos y del cultivo como un String con varios caracteres. La función los separa
 
-void procesarComando(String cmd) {
-  // Verificar si es un comando válido (debe empezar con $ y terminar con @)
-  if (cmd.startsWith("$") && cmd.endsWith("@")) {
-    // Eliminar los caracteres de inicio y fin
-    cmd = cmd.substring(1, cmd.length() - 1);
-    
-    // Dividir la cadena por punto y coma para obtener cada segmento
-    int separador1 = cmd.indexOf(';');
-    int separador2 = cmd.indexOf(';', separador1 + 1);
-    int separador3 = cmd.indexOf(';', separador2 + 1);
-    
-    if (separador1 != -1) {
-      // Procesar segmento 1: CoordXA, CoordYA, AnguloRobot
-      String segmento1 = cmd.substring(0, separador1);
-      int coma1 = segmento1.indexOf(',');
-      int coma2 = segmento1.indexOf(',', coma1 + 1);
-      
-      if (coma1 != -1 && coma2 != -1) {
-        PuntoInicial[0] = segmento1.substring(0, coma1).toFloat();
-        PuntoInicial[1] = segmento1.substring(coma1 + 1, coma2).toFloat();
-        AnguloInicial = segmento1.substring(coma2 + 1).toFloat();
-      }
-      
-      // Procesar segmento 2: CoordXB, CoordYB
-      if (separador2 != -1) {
-        String segmento2 = cmd.substring(separador1 + 1, separador2);
-        int coma3 = segmento2.indexOf(',');
-        
-        if (coma3 != -1) {
-          PuntoB[0] = segmento2.substring(0, coma3).toFloat();
-          PuntoB[1] = segmento2.substring(coma3 + 1).toFloat();
-        }
-        
-        // Procesar segmento 3: CoordXC, CoordYC
-        if (separador3 != -1) {
-          String segmento3 = cmd.substring(separador2 + 1, separador3);
-          int coma4 = segmento3.indexOf(',');
-          
-          if (coma4 != -1) {
-            PuntoC[0] = segmento3.substring(0, coma4).toFloat();
-            PuntoC[1] = segmento3.substring(coma4 + 1).toFloat();
-          }
-          
-          // Procesar segmento 4: CoordXCultivo, CoordYCultivo, AnguloCultivo
-          String segmento4 = cmd.substring(separador3 + 1);
-          int coma5 = segmento4.indexOf(',');
-          int coma6 = segmento4.indexOf(',', coma5 + 1);
-          
-          if (coma5 != -1 && coma6 != -1) {
-            Xcultivo = segmento4.substring(0, coma5).toFloat();
-            Ycultivo = segmento4.substring(coma5 + 1, coma6).toFloat();
-            RotacionCultivo = segmento4.substring(coma6 + 1).toFloat();
-          }
-        }
-      }
-    }
+void procesarDatosAB(String cmd) {
+  String cmdSinDelim = cmd.substring(1, cmd.length() - 1);
+  // Separar por ';'
+  int separador = cmdSinDelim.indexOf(';');
+  if (separador == -1) {
+    Serial.println("ERROR: Separador ';' no encontrado");
+    return;
+  }
+  
+  String segmentoA = cmdSinDelim.substring(0, separador);     // Punto A: x,y,θ
+  String segmentoB = cmdSinDelim.substring(separador + 1);    // Punto B: x,y
+  int c1 = segmentoA.indexOf(',');
+  int c2 = segmentoA.indexOf(',', c1 + 1);
+  if (c1 != -1 && c2 != -1) {
+    PuntoInicial[0] = segmentoA.substring(0, c1).toFloat();
+    PuntoInicial[1] = segmentoA.substring(c1 + 1, c2).toFloat();
+    AnguloInicial = segmentoA.substring(c2 + 1).toFloat();
   } 
-  else if (cmd == "S") {
-    // Comando de parada
-    rueda.Detener();
+  // Procesar Punto B
+  int c3 = segmentoB.indexOf(',');
+  if (c3 != -1) {
+    PuntoB[0] = segmentoB.substring(0, c3).toFloat();
+    PuntoB[1] = segmentoB.substring(c3 + 1).toFloat();
   }
 }
+
+void procesarDatosC_Cultivo(String cmd) {  
+  // Eliminar delimitadores
+  String cmdSinDelim = cmd.substring(1, cmd.length() - 1);
+  // Separar por ';'
+  int separador = cmdSinDelim.indexOf(';');
+  if (separador == -1) {
+    Serial.println("ERROR: Separador ';' no encontrado");
+    return;
+  }
+  
+  String segmentoC = cmdSinDelim.substring(0, separador);         // Punto C: x,y
+  String segmentoCultivo = cmdSinDelim.substring(separador + 1);  // Cultivo: x,y,θ
+
+
+  int c1 = segmentoC.indexOf(',');
+  if (c1 != -1) {
+    PuntoC[0] = segmentoC.substring(0, c1).toFloat();
+    PuntoC[1] = segmentoC.substring(c1 + 1).toFloat();
+  } 
+
+  // Procesar Punto Cultivo
+  int c2 = segmentoCultivo.indexOf(',');
+  int c3 = segmentoCultivo.indexOf(',', c2 + 1);
+  if (c2 != -1 && c3 != -1) {
+    Xcultivo = segmentoCultivo.substring(0, c2).toFloat();
+    Ycultivo = segmentoCultivo.substring(c2 + 1, c3).toFloat();
+    RotacionCultivo = segmentoCultivo.substring(c3 + 1).toFloat();
+  }
+}
+
+bool validarFormato(String cmd) {
+  // Validar formato básico
+  if (cmd.startsWith("$") && cmd.endsWith("@")) {
+    // Debe tener al menos un ';' para separar los dos puntos
+    return (cmd.indexOf(';') > 0);
+  } 
+  else if (cmd.startsWith("&") && cmd.endsWith("#")) {
+    // Debe tener al menos un ';' para separar punto C y cultivo
+    return (cmd.indexOf(';') > 0);
+  }
+  return false;
+}
+
+void procesarComando(String cmd) {  
+  if (cmd.startsWith("$") && cmd.endsWith("@")) {
+      procesarDatosAB(cmd);
+  } 
+  else if (cmd.startsWith("&") && cmd.endsWith("#")) {
+      procesarDatosC_Cultivo(cmd);
+  }
+  else if (cmd.startsWith("S")) {
+    //Serial.println("-> Comando de parada recibido");
+   // rueda.Detener();  // Comando de parada
+  }
+}
+
+
 
 //Entra un numero dado en grados y devuelve el mismo en radianes.
 float GradosToRad(float grados){
@@ -154,6 +177,7 @@ void DefinirObjetivos(float Vector[2]){
    AnguloObjetivo = atan2(Vector[1] - PosicionActual[1] , Vector[0] - PosicionActual[0]);
    if (AnguloObjetivo < 0) {AnguloObjetivo = AnguloObjetivo + 6.2832;}
    Serial.print("Angulo Objetivo:"); Serial.println(AnguloObjetivo);
+
  }
 
 void IrHaciaObjetivos(){
@@ -166,17 +190,20 @@ void IrHaciaObjetivos(){
    //Comenzar rotacion, girando los motores en direcciones opuestas
    if((AnguloMagneticoObjetivo - brujula.DireccionMagnetica()) > 0.06){ //Rotar a la derecha
       rueda.GirarDerecha();
-      Serial.println("Girando a la derecha...");
+      void enviarPosicionActual();
+      //Serial.println("Girando a la derecha...");
    }
    else if((AnguloMagneticoObjetivo - brujula.DireccionMagnetica()) < -0.06){ //Rotar a la izquierda
       rueda.GirarIzquierda();
-      Serial.println("Girando a la izquierda...");
+      void enviarPosicionActual();
+      //Serial.println("Girando a la izquierda...");
    }
 
    //Continuar rotacion hasta que el robot este a alrededor de 3° del angulo objetivo
    while(abs(AnguloMagneticoObjetivo - brujula.DireccionMagnetica()) > 0.06){
       Serial.print("Direccion actual: "); Serial.println(brujula.DireccionMagnetica());
       Serial.print("Diferencia: "); Serial.println(abs(AnguloMagneticoObjetivo - brujula.DireccionMagnetica()));
+      void enviarPosicionActual();
       delay(10);
    }
 
@@ -184,12 +211,14 @@ void IrHaciaObjetivos(){
    regla_A.ResetDistancia();
    regla_B.ResetDistancia();
    rueda.Detener();
+
    delay(500);
 
    //Moverse hacia adelante hasta estar a menos de 5cm de la distancia objetivo
    rueda.Adelante();
    Serial.println("Moviendo hacia adelante...");
    while((DistanciaObjetivo - DistPromedioEncoders()) > 0.05){
+    void enviarPosicionActual();
     Serial.print("Distancia Recorrida:  "); Serial.println(DistPromedioEncoders());
       delay(10);
    }
@@ -227,6 +256,8 @@ void setup() {
    //Inicializar el pin del encoder, y detectar cada vez que este se activa.
    pinMode(PIN_ENCODER_A, INPUT_PULLUP);
    pinMode(PIN_ENCODER_B, INPUT_PULLUP);
+   pinMode(LED_green,OUTPUT);
+   pinMode(LED_red, OUTPUT);
    attachInterrupt(digitalPinToInterrupt(PIN_ENCODER_A), IncrementarDistEncoder_A, FALLING);
    attachInterrupt(digitalPinToInterrupt(PIN_ENCODER_B), IncrementarDistEncoder_B, FALLING);
    pinMode(PLANT_PIN, INPUT_PULLUP); //El componente debe ser conectado entre el pin de la planta, y un pin GND.
@@ -236,19 +267,54 @@ void setup() {
 }  
 
 void loop() {
-    bool detener = false;
+   // bool detener = false;
+    digitalWrite(LED_red, HIGH);
+    analogWrite(LED_green, LOW);
+
 
    //Recepción de datos de los puntos y del cultivo
    static String Comando = "";
+   static bool comandoIniciado = false;
+   
    while (BT.available()){
       char C = BT.read();
-      if (C == '@'){
-         Comando += C;
-         procesarComando(Comando);
-         Comando = "";
+      
+      // Detectar inicio de comando
+      if (C == '$' || C == '&') {
+        // Si ya teníamos un comando iniciado, lo descartamos
+        if (comandoIniciado) {
+          Serial.println("ADVERTENCIA: Comando anterior incompleto descartado");
+        }
+        Comando = String(C);  // Iniciar nuevo comando
+        comandoIniciado = true;
+        Serial.println("-> Nuevo comando iniciado con: " + String(C));
       }
-      else 
-      Comando += C; 
+      // Solo procesar caracteres si tenemos un comando iniciado
+      else if (comandoIniciado) {
+        // Verificar delimitadores de fin de comando
+        if (C == '@' || C == '#'){
+           Comando += C;  // Añadir el delimitador final
+           Comando.trim(); // Eliminar espacios en blanco
+                    
+           
+           if (Comando.length() > 2 && validarFormato(Comando)) {
+             procesarComando(Comando);
+           } else {
+             Serial.println("ERROR: Comando con formato inválido o demasiado corto");
+           }
+           
+           // Limpiar buffer y estado
+           Comando = "";
+           comandoIniciado = false;
+        }
+        else {
+          Comando += C;
+          if (Comando.length() > 100) {
+            Comando = "";
+            comandoIniciado = false;
+          }
+        }
+      }
    }
 
    // !!!   EL CODIGO DESPUES DE ESTE COMENTARIO SOLO SE DEBE EJECUTAR DESPUES DE REALIZAR LA CONEXION
@@ -260,43 +326,67 @@ void loop() {
    AnguloActual = GradosToRad(AnguloInicial);
    PosicionActual[0] = PuntoInicial[0];
    PosicionActual[1] = PuntoInicial[1];
-   Serial.println("Calculos de navegacion completados!");
+   //Serial.println("Calculos de navegacion completados!");
+   Serial.println("Esperando planta...");
+
 
    //Espera a que la planta se coloque en su lugar
-   while (digitalRead(PLANT_PIN)==HIGH)
+   /*while (digitalRead(PLANT_PIN)==HIGH)
    {
       Serial.println("Esperando a la planta...");
       delay(500);
-   }
+   }*/
    
    //Si detecta la planta
    //Parte de un Punto Global A, y se dirige a dos puntos Locales, primero el B, y luego el C.
-   Serial.println("Planta detectada!");
-   Serial.println("Dirigiendose al punto B...");
-   DefinirObjetivos(PuntoB);
-   IrHaciaObjetivos();
-   PosicionActual[0] = PuntoB[0];
-   PosicionActual[1] = PuntoB[1];
-   AnguloActual = AnguloObjetivo;
-   Serial.println("Dirigiendose al punto C...");
-   DefinirObjetivos(PuntoC);
-   IrHaciaObjetivos();
-   PosicionActual[0] = PuntoC[0];
-   PosicionActual[1] = PuntoC[1];
-   AnguloActual = AnguloObjetivo;
-   Serial.println("Dirigiendose al punto B...");
-   DefinirObjetivos(PuntoB);
-   IrHaciaObjetivos();
-   PosicionActual[0] = PuntoB[0];
-   PosicionActual[1] = PuntoB[1];
-   AnguloActual = AnguloObjetivo;
-   Serial.println("Volviendo a la posicion inicial...");
-   DefinirObjetivos(PuntoInicial);
-   IrHaciaObjetivos();
-   PosicionActual[0] = PuntoInicial[0];
-   PosicionActual[1] = PuntoInicial[1];
-   AnguloActual = AnguloObjetivo;
-   while(detener==false){delay(100);}
+   if(digitalRead(PLANT_PIN)==LOW){
+      analogWrite(LED_red,LOW);
+      analogWrite(LED_green,intensidad);
+      Serial.println("Planta detectada!");
+      Serial.println("Dirigiendose al punto B...");
+      DefinirObjetivos(PuntoB);    //  Dentro de estas dos funciones deben incluirse la funcion encargada de enviar los datos del robot
+      IrHaciaObjetivos();          //
+      PosicionActual[0] = PuntoB[0];
+      PosicionActual[1] = PuntoB[1];
+      AnguloActual = AnguloObjetivo;
+      Serial.println("Dirigiendose al punto C...");
+      DefinirObjetivos(PuntoC);
+      IrHaciaObjetivos();
+      PosicionActual[0] = PuntoC[0];
+      PosicionActual[1] = PuntoC[1];
+      AnguloActual = AnguloObjetivo;
+
+   //Antes de volver al origen, la planta debe ser recolectada en el punto C.
+
+      while(digitalRead(PLANT_PIN)==LOW){
+        void enviarPosicionActual();
+        Serial.println("Esperando Recolección de planta...");
+        digitalWrite(LED_red,HIGH);
+        digitalWrite(LED_green,LOW);
+      }
+
+      digitalWrite(LED_green,LOW);
+      digitalWrite(LED_red,LOW);
+      
+      Serial.println("Dirigiendose al punto B...");
+      DefinirObjetivos(PuntoB);
+      IrHaciaObjetivos();
+      PosicionActual[0] = PuntoB[0];
+      PosicionActual[1] = PuntoB[1];
+      AnguloActual = AnguloObjetivo;
+      Serial.println("Volviendo a la posicion inicial...");
+      DefinirObjetivos(PuntoInicial);
+      IrHaciaObjetivos();
+      PosicionActual[0] = PuntoInicial[0];
+      PosicionActual[1] = PuntoInicial[1];
+      AnguloActual = AnguloObjetivo;
+      //while(detener==false){delay(100);} Quite esto por que la idea es que el robot pueda volver a ponerse operativo
+      delay(100);
+   
+   } else{
+        rueda.Detener();
+   }
+   delay(500);
 }
 
 //FIN
