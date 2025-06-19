@@ -29,8 +29,8 @@ void motor::Detener() {
 }
 
 void motor::Adelante() {
-    analogWrite(AIN2, 150);
-    analogWrite(BIN2, 150);
+    analogWrite(AIN2, 140);
+    analogWrite(BIN2, 140);
   }
 
 void motor::GirarDerecha() {

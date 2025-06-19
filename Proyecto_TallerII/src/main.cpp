@@ -10,9 +10,9 @@
 #define PLANT_PIN 7
 #define PIN_ENCODER_A 2
 #define PIN_ENCODER_B 3
-#define LED_green 9
-#define LED_red 8
-#define intensidad 120
+//#define LED_green 9
+//#define LED_red 8
+//#define intensidad 120
 
 //Los motores usan los pines digitales 4, 5, 6, 12, y 8.
 //El magnetometro usa los pines analogos A5 y A4.
@@ -185,26 +185,26 @@ void IrHaciaObjetivos(){
 
    float AnguloMagneticoObjetivo = brujula.DireccionMagnetica() + (AnguloActual - AnguloObjetivo);
    if(AnguloMagneticoObjetivo<0){AnguloMagneticoObjetivo += 6.2832;}
-   Serial.println(AnguloMagneticoObjetivo);
+   Serial.print("Angulo Magnetico Objetivo: "); Serial.println(AnguloMagneticoObjetivo);
 
    //Comenzar rotacion, girando los motores en direcciones opuestas
    if((AnguloMagneticoObjetivo - brujula.DireccionMagnetica()) > 0.08){ //Rotar a la derecha
       rueda.GirarDerecha();
-      void enviarPosicionActual();
+      //void enviarPosicionActual();
       //Serial.println("Girando a la derecha...");
    }
    else if((AnguloMagneticoObjetivo - brujula.DireccionMagnetica()) < -0.08){ //Rotar a la izquierda
       rueda.GirarIzquierda();
-      void enviarPosicionActual();
+      //void enviarPosicionActual();
       //Serial.println("Girando a la izquierda...");
    }
 
-   //Continuar rotacion hasta que el robot este a alrededor de 3° del angulo objetivo
+   //Continuar rotacion hasta que el robot este a alrededor de 5° del angulo objetivo
    while(abs(AnguloMagneticoObjetivo - brujula.DireccionMagnetica()) > 0.08){
-      Serial.print("Direccion actual: "); Serial.println(RadToGrados(brujula.DireccionMagnetica()));
-      Serial.print("Diferencia: "); Serial.println(RadToGrados(abs(AnguloMagneticoObjetivo - brujula.DireccionMagnetica())));
-      void enviarPosicionActual();
-      delay(10);
+      //Serial.print("Direccion actual: "); Serial.println(RadToGrados(brujula.DireccionMagnetica()));
+      //Serial.print("Diferencia: "); Serial.println(RadToGrados(abs(AnguloMagneticoObjetivo - brujula.DireccionMagnetica())));
+      //void enviarPosicionActual();
+      delay(5);
    }
 
    //Detener el robot y esperar un momento
@@ -218,9 +218,9 @@ void IrHaciaObjetivos(){
    rueda.Adelante();
    Serial.println("Moviendo hacia adelante...");
    while((DistanciaObjetivo - DistPromedioEncoders()) > 0.08){
-    void enviarPosicionActual();
-    Serial.print("Distancia Recorrida:  "); Serial.println(DistPromedioEncoders());
-      delay(10);
+   //void enviarPosicionActual();
+   //Serial.print("Distancia Recorrida:  "); Serial.println(DistPromedioEncoders());
+   delay(5);
    }
 
    //Detener los motores, y reiniciar el contador de distancia
@@ -256,8 +256,8 @@ void setup() {
    //Inicializar el pin del encoder, y detectar cada vez que este se activa.
    pinMode(PIN_ENCODER_A, INPUT_PULLUP);
    pinMode(PIN_ENCODER_B, INPUT_PULLUP);
-   pinMode(LED_green,OUTPUT);
-   pinMode(LED_red, OUTPUT);
+   //pinMode(LED_green,OUTPUT);
+   //pinMode(LED_red, OUTPUT);
    attachInterrupt(digitalPinToInterrupt(PIN_ENCODER_A), IncrementarDistEncoder_A, FALLING);
    attachInterrupt(digitalPinToInterrupt(PIN_ENCODER_B), IncrementarDistEncoder_B, FALLING);
    pinMode(PLANT_PIN, INPUT_PULLUP); //El componente debe ser conectado entre el pin de la planta, y un pin GND.
@@ -269,8 +269,8 @@ void setup() {
 void loop() {
    // bool detener = false;
     Serial.println("Iniciando loop...");
-    digitalWrite(LED_red, HIGH);
-    digitalWrite(LED_green, LOW);
+    //digitalWrite(LED_red, HIGH);
+    //digitalWrite(LED_green, LOW);
 
 
    //Recepción de datos de los puntos y del cultivo
@@ -319,7 +319,10 @@ void loop() {
         }
       }
    }
-
+   
+   Serial.println("---Puntos Pre-Transformacion---");
+   Serial.print("Punto B: X: "); Serial.print(PuntoB[0]); Serial.print("   Y: "); Serial.println(PuntoB[1]);
+   Serial.print("Punto C: X: "); Serial.print(PuntoC[0]); Serial.print("   Y: "); Serial.println(PuntoC[1]);
    // !!!   EL CODIGO DESPUES DE ESTE COMENTARIO SOLO SE DEBE EJECUTAR DESPUES DE REALIZAR LA CONEXION
    //   BLUETOOTH, Y HABER RECIBIDO LOS DATOS NECESARIOS PARA LA NAVEGACION POR MEDIO DE ESTA   !!!
 
@@ -330,6 +333,11 @@ void loop() {
    PosicionActual[0] = PuntoInicial[0];
    PosicionActual[1] = PuntoInicial[1];
    //Serial.println("Calculos de navegacion completados!");
+
+   Serial.println("---Puntos Post-Transformacion---");
+   Serial.print("Punto B: X: "); Serial.print(PuntoB[0]); Serial.print("   Y: "); Serial.println(PuntoB[1]);
+   Serial.print("Punto C: X: "); Serial.print(PuntoC[0]); Serial.print("   Y: "); Serial.println(PuntoC[1]);
+
    Serial.println("Esperando planta...");
 
 
@@ -339,11 +347,11 @@ void loop() {
       Serial.println("Esperando a la planta...");
       delay(500);
    }
-   
+    
    //Si detecta la planta
    //Parte de un Punto Global A, y se dirige a dos puntos Locales, primero el B, y luego el C.
-      digitalWrite(LED_red,LOW);
-      digitalWrite(LED_green,HIGH);
+      //digitalWrite(LED_red,LOW);
+      //digitalWrite(LED_green,HIGH);
       Serial.println("Planta detectada!");
       Serial.println("Dirigiendose al punto B...");
       DefinirObjetivos(PuntoB);    //  Dentro de estas dos funciones deben incluirse la funcion encargada de enviar los datos del robot
@@ -360,13 +368,13 @@ void loop() {
 
    //Antes de volver al origen, la planta debe ser recolectada en el punto C.
       void enviarPosicionActual();
-      digitalWrite(LED_red,HIGH);
+      //digitalWrite(LED_red,HIGH);
       while(digitalRead(PLANT_PIN)==LOW){
         Serial.println("Esperando Recolección de planta...");
         delay(500);
       }
 
-      digitalWrite(LED_red,LOW);
+      //digitalWrite(LED_red,LOW);
       
       Serial.println("Dirigiendose al punto B...");
       DefinirObjetivos(PuntoB);
